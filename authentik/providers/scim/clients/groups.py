@@ -96,6 +96,13 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
     def create(self, group: Group):
         """Create group from scratch and create a connection object"""
         scim_group = self.to_schema(group, None)
+
+        self.logger.info(
+            "=== SCIM group:create", data=scim_group.model_dump(
+                mode="json",
+                exclude_unset=True,
+            ),
+        )
         response = self._request(
             "POST",
             "/Groups",
@@ -118,6 +125,10 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         """Update existing group"""
         scim_group = self.to_schema(group, connection)
         scim_group.id = connection.scim_id
+
+        self.logger.info(
+            "=== SCIM group:update", id=connection.scim_id
+        )
         try:
             if self._config.patch.supported:
                 return self._update_patch(group, scim_group, connection)
@@ -195,6 +206,15 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             return self._update_patch(group, scim_group, connection)
 
     def update_group(self, group: Group, action: Direction, users_set: set[int]):
+
+        scim_group = self.to_schema(group, None)
+        self.logger.info(
+            "=== SCIM group: update_group", data=scim_group.model_dump(
+                mode="json",
+                exclude_unset=True,
+            ),
+        )
+
         """Update a group, either using PUT to replace it or PATCH if supported"""
         scim_group = SCIMProviderGroup.objects.filter(provider=self.provider, group=group).first()
         if not scim_group:
