@@ -337,6 +337,10 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         for user in users_should:
             if len([x for x in current_group_members if x == user]) < 1:
                 users_to_add.append(user)
+
+        self.logger.warning(f"XXXXX Group {scim_group.scim_id}. Users to add:", users=users_to_add)
+        self.logger.warning(f"XXXXX Group {scim_group.scim_id}. Users to remove:", users=users_to_remove)
+
         # Only send request if we need to make changes
         if len(users_to_add) < 1 and len(users_to_remove) < 1:
             return
