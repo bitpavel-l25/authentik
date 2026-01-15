@@ -308,7 +308,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 )['Resources']
                 for u in raw_users:
                     current_group_members.append(
-                        SCIMUserSchema.model_validate(u)
+                        SCIMUserSchema.model_validate(u).id
                     )
 
             case _:
