@@ -284,39 +284,40 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             )
 
         current_group_members = []
-        case SCIMCompatibilityMode.AWS:
-            # self._update_patch_aws(group, scim_group, connection)
-            # current_group_members = SCIMUserSchema.model_validate( # todo: to check if SCIMUserSchema exists and correctness of use
-            #     self._request(
-            #         "GET",
-            #         "/Users",
-            #         params = {
-            #             'filter': f'groups.value eq "{scim_group.scim_id}"'
-            #         }
-            #     )
-            # )
+        match self.provider.compatibility_mode:
+            case SCIMCompatibilityMode.AWS:
+                # self._update_patch_aws(group, scim_group, connection)
+                # current_group_members = SCIMUserSchema.model_validate( # todo: to check if SCIMUserSchema exists and correctness of use
+                #     self._request(
+                #         "GET",
+                #         "/Users",
+                #         params = {
+                #             'filter': f'groups.value eq "{scim_group.scim_id}"'
+                #         }
+                #     )
+                # )
 
 
-            # current_group_members = SCIMUserSchema.model_validate( # todo: to check if SCIMUserSchema exists and correctness of use
-            raw_users = self._request(
-                "GET",
-                "/Users",
-                params = {
-                    'filter': f'groups.value eq "{scim_group.scim_id}"'
-                }
-            )['Resources']
-            for u in raw_users:
-                current_group_members.append(
-                    SCIMUserSchema.model_validate(u)
+                # current_group_members = SCIMUserSchema.model_validate( # todo: to check if SCIMUserSchema exists and correctness of use
+                raw_users = self._request(
+                    "GET",
+                    "/Users",
+                    params = {
+                        'filter': f'groups.value eq "{scim_group.scim_id}"'
+                    }
+                )['Resources']
+                for u in raw_users:
+                    current_group_members.append(
+                        SCIMUserSchema.model_validate(u)
+                    )
+
+            case _:
+                # Get current group status
+                current_group = SCIMGroupSchema.model_validate(
+                    self._request("GET", f"/Groups/{scim_group.scim_id}")
                 )
-
-        case _:
-            # Get current group status
-            current_group = SCIMGroupSchema.model_validate(
-                self._request("GET", f"/Groups/{scim_group.scim_id}")
-            )
-            if current_group.members is not None:
-                current_group_members = current_group.members
+                if current_group.members is not None:
+                    current_group_members = current_group.members
 
         # # Get current group status
         # current_group = SCIMGroupSchema.model_validate(
