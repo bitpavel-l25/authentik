@@ -317,7 +317,8 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                     self._request("GET", f"/Groups/{scim_group.scim_id}")
                 )
                 if current_group.members is not None:
-                    current_group_members = current_group.members
+                    for i in current_group.members:
+                        current_group_members.append(i.value)
 
         # # Get current group status
         # current_group = SCIMGroupSchema.model_validate(
@@ -330,11 +331,11 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         users_to_remove = []
         # Check users currently in group and if they shouldn't be in the group and remove them
         for user in current_group_members:
-            if user.value not in users_should:
+            if user not in users_should:
                 users_to_remove.append(user.value)
         # Check users that should be in the group and add them
         for user in users_should:
-            if len([x for x in current_group_members if x.value == user]) < 1:
+            if len([x for x in current_group_members if x == user]) < 1:
                 users_to_add.append(user)
         # Only send request if we need to make changes
         if len(users_to_add) < 1 and len(users_to_remove) < 1:
