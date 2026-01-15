@@ -29,6 +29,7 @@ from authentik.providers.scim.clients.schema import (
     PatchRequest,
 )
 from authentik.providers.scim.clients.schema import Group as SCIMGroupSchema
+from authentik.providers.scim.clients.schema import User as SCIMUserSchema
 from authentik.providers.scim.models import (
     SCIMCompatibilityMode,
     SCIMMapping,
@@ -281,21 +282,59 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 "User count mismatch, not all users in the group are synced to SCIM yet.",
                 group=group,
             )
-        # Get current group status
-        current_group = SCIMGroupSchema.model_validate(
-            self._request("GET", f"/Groups/{scim_group.scim_id}")
-        )
+
+        current_group_members = []
+        case SCIMCompatibilityMode.AWS:
+            # self._update_patch_aws(group, scim_group, connection)
+            # current_group_members = SCIMUserSchema.model_validate( # todo: to check if SCIMUserSchema exists and correctness of use
+            #     self._request(
+            #         "GET",
+            #         "/Users",
+            #         params = {
+            #             'filter': f'groups.value eq "{scim_group.scim_id}"'
+            #         }
+            #     )
+            # )
+
+
+            # current_group_members = SCIMUserSchema.model_validate( # todo: to check if SCIMUserSchema exists and correctness of use
+            raw_users = self._request(
+                "GET",
+                "/Users",
+                params = {
+                    'filter': f'groups.value eq "{scim_group.scim_id}"'
+                }
+            )['Resources']
+            for u in raw_users:
+                current_group_members.append(
+                    SCIMUserSchema.model_validate(u)
+                )
+
+        case _:
+            # Get current group status
+            current_group = SCIMGroupSchema.model_validate(
+                self._request("GET", f"/Groups/{scim_group.scim_id}")
+            )
+            if current_group.members is not None:
+                current_group_members = current_group.members
+
+        # # Get current group status
+        # current_group = SCIMGroupSchema.model_validate(
+        #     self._request("GET", f"/Groups/{scim_group.scim_id}")
+        # )
+
+
+
         users_to_add = []
         users_to_remove = []
         # Check users currently in group and if they shouldn't be in the group and remove them
-        for user in current_group.members or []:
+        for user in current_group_members:
             if user.value not in users_should:
                 users_to_remove.append(user.value)
         # Check users that should be in the group and add them
-        if current_group.members is not None:
-            for user in users_should:
-                if len([x for x in current_group.members if x.value == user]) < 1:
-                    users_to_add.append(user)
+        for user in users_should:
+            if len([x for x in current_group_members if x.value == user]) < 1:
+                users_to_add.append(user)
         # Only send request if we need to make changes
         if len(users_to_add) < 1 and len(users_to_remove) < 1:
             return
