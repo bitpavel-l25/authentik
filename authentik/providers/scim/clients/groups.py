@@ -150,7 +150,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         # else:
         #     self.logger.warning("FALSE")
                         
-        remote_group_ids = []
+        remote_group_ids = {}
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
                 rsp = self._request(
@@ -163,7 +163,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 for group in rsp['Resources']:
                     # remote_groups.append(SCIMGroupSchema.model_validate(group).scim_id)
                     scim_group = SCIMGroupSchema.model_validate(group)
-                    remote_group_ids[scim_group.id] = scim_group.scim_id  # todo: to check if group with scim_group.id already exists
+                    remote_group_ids[scim_group.externalId] = scim_group.id  # todo: to check if group with scim_group.id already exists
                 while 'nextCursor' in rsp:
                     rsp = self._request(
                         "GET",
@@ -175,7 +175,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                     for group in rsp['Resources']:
                         # remote_groups.append(SCIMGroupSchema.model_validate(group).scim_id)
                         scim_group = SCIMGroupSchema.model_validate(group)
-                        remote_group_ids[scim_group.id] = scim_group.scim_id
+                        remote_group_ids[scim_group.externalId] = scim_group.id
         if len(remote_group_ids.keys()) < 1:
             return
 
