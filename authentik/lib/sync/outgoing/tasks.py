@@ -61,6 +61,7 @@ class SyncTasks:
         self,
         provider_pk: int,
         sync_objects: Actor[[str, int, int, bool], None],
+        cleanup_objects: Actor[[str, int, bool], None],
     ):
         task = CurrentTask.get_task()
         self.logger = get_logger().bind(
@@ -91,6 +92,7 @@ class SyncTasks:
                         object_type=User,
                     )
                 )
+                # user_cleanup_task = group(...)
                 group_tasks = group(
                     self.sync_paginator(
                         current_task=task,
@@ -100,6 +102,18 @@ class SyncTasks:
                         object_type=Group,
                     )
                 )
+                # group_cleanup_task = group(
+                #     cleanup_objects
+                # )
+
+                # cleanup_objects.message_with_options(
+                #     args=(class_to_path(Group), provider.pk),
+                #     # time_limit=time_limit,
+                #     # # Assign tasks to the same schedule as the current one
+                #     # rel_obj=current_task.rel_obj,
+                #     uid=f"{provider.name}:{Group._meta.model_name}",
+                # ).run().wait(timeout=provider.get_object_sync_time_limit_ms(Group)) # todo: reconsider timeout
+                cleanup_objects.send(class_to_path(Group), provider.pk)
                 users_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(User))
                 group_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(Group))
             except TransientSyncException as exc:
@@ -186,6 +200,72 @@ class SyncTasks:
                     obj=sanitize_item(obj),
                 )
                 break
+
+    def cleanup_objects(
+        self,
+        object_type: str,
+        provider_pk: int,
+        override_dry_run=False,
+    ):
+        task = CurrentTask.get_task()
+        _object_type: type[Model] = path_to_class(object_type)
+        self.logger = get_logger().bind(
+            provider_type=class_to_path(self._provider_model),
+            # provider_pk=provider_pk,
+            object_type=object_type,
+        )
+        provider: OutgoingSyncProvider | None = self._provider_model.objects.filter(
+            Q(backchannel_application__isnull=False) | Q(application__isnull=False),
+            pk=provider_pk,
+        ).first()
+        if not provider:
+            task.warning("No provider found. Is it assigned to an application?")
+            return
+        # Override dry run mode if requested, however don't save the provider
+        # so that scheduled sync tasks still run in dry_run mode
+        if override_dry_run:
+            provider.dry_run = False
+        try:
+            client = provider.client_for_model(_object_type)
+        except TransientSyncException:
+            return
+
+        # task = CurrentTask.get_task()
+        # self.logger = get_logger().bind(
+        #     provider_type=class_to_path(self._provider_model),
+        #     object_type=object_type,
+        # )
+                # group = Group.objects.filter(pk=group_pk).first()
+                # if not group:
+                #     return
+        # provider: OutgoingSyncProvider = self._provider_model.objects.filter(
+        #     Q(backchannel_application__isnull=False) | Q(application__isnull=False),
+        #     pk=provider_pk,
+        # ).first()
+        # if not provider:
+        #     task.warning("No provider found. Is it assigned to an application?")
+        #     return
+
+                # # Check if the object is allowed within the provider's restrictions
+                # queryset: QuerySet = provider.get_object_qs(Group)
+                # # The queryset we get from the provider must include the instance we've got given
+                # # otherwise ignore this provider
+                # if not queryset.filter(pk=group_pk).exists():
+                #     return
+
+        client = provider.client_for_model(_object_type)
+        try:
+            client.cleanup() # group, operation, pk_set
+        except TransientSyncException as exc:
+            raise Retry() from exc
+        except SkipObjectException:
+            return
+        except DryRunRejected as exc:
+            self.logger.info("Rejected dry-run event", exc=exc)
+        except StopSync as exc:
+            self.logger.warning("Stopping sync", exc=exc, provider_pk=provider.pk)
+
+
 
     def sync_signal_direct_dispatch(
         self,

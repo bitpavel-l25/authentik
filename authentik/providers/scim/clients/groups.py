@@ -143,6 +143,13 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             # Resource missing is handled by self.write, which will re-create the group
             raise
 
+    def cleanup(self): # , connection: SCIMProviderGroup
+        self.logger.warning("RUN CLEANUP")
+        if self.provider.compatibility_mode == SCIMCompatibilityMode.AWS:
+            self.logger.warning("TRUE")
+        else:
+            self.logger.warning("FALSE")
+
     def _update_patch(
         self, group: Group, scim_group: SCIMGroupSchema, connection: SCIMProviderGroup
     ):
