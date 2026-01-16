@@ -150,8 +150,8 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         # else:
         #     self.logger.warning("FALSE")
                         
-        # remote_group_ids = {}
-        remote_group_ids = []
+        remote_group_ids = {}
+        # remote_group_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
                 rsp = self._request(
@@ -162,9 +162,9 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                     }
                 )
                 for group in rsp['Resources']:
-                    remote_group_ids.append(SCIMGroupSchema.model_validate(group).id)
-                    # scim_group = SCIMGroupSchema.model_validate(group)
-                    # remote_group_ids[scim_group.externalId] = scim_group.id  # todo: to check if group with scim_group.id already exists
+                    # remote_group_ids.append(SCIMGroupSchema.model_validate(group).id)
+                    scim_group = SCIMGroupSchema.model_validate(group)
+                    remote_group_ids[scim_group.externalId] = scim_group.id  # todo: to check if group with scim_group.id already exists
                 while 'nextCursor' in rsp:
                     rsp = self._request(
                         "GET",
@@ -174,21 +174,21 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                         }
                     )
                     for group in rsp['Resources']:
-                        remote_group_ids.append(SCIMGroupSchema.model_validate(group).id)
-                        # scim_group = SCIMGroupSchema.model_validate(group)
-                        # remote_group_ids[scim_group.externalId] = scim_group.id
+                        # remote_group_ids.append(SCIMGroupSchema.model_validate(group).id)
+                        scim_group = SCIMGroupSchema.model_validate(group)
+                        remote_group_ids[scim_group.externalId] = scim_group.id
         if len(remote_group_ids) < 1:
             return
         self.logger.warning("REMOTE GROUP IDS", groups=remote_group_ids)
 
         local_group_ids = list(
             SCIMProviderGroup.objects.filter(
-                group__pk__in=remote_group_ids, provider=self.provider
+                group__pk__in=remote_group_ids.keys(), provider=self.provider
             ).values_list("scim_id", flat=True)
         )
         self.logger.warning("LOCAL GROUP IDS", groups=local_group_ids)
         counter=0
-        for id in remote_group_ids:
+        for id in remote_group_ids.values():
             if id not in local_group_ids:
                 counter+=1
                 self.logger.warning(f"DELETE group {id}")
