@@ -299,17 +299,33 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
 
 
                 # current_group_members = SCIMUserSchema.model_validate( # todo: to check if SCIMUserSchema exists and correctness of use
-                raw_users = self._request(
+                rsp = self._request(
                     "GET",
                     "/Users",
                     params = {
-                        'filter': f'groups.value eq "{scim_group.scim_id}"'
+                        'cursor': '',
+                        'filter': f'groups.value eq "{scim_group.scim_id}"',
                     }
-                )['Resources']
-                for u in raw_users:
+                )
+                for u in rsp['Resources']:
                     current_group_members.append(
                         SCIMUserSchema.model_validate(u).id
                     )
+
+                while 'nextCursor' in rsp:
+                    rsp = self._request(
+                        "GET",
+                        "/Users",
+                        params = {
+                            'cursor': rsp['nextCursor'],
+                            'filter': f'groups.value eq "{scim_group.scim_id}"'
+                        }
+                    )
+                    for u in rsp['Resources']:
+                        current_group_members.append(
+                            SCIMUserSchema.model_validate(u).id
+                        )
+
 
             case _:
                 # Get current group status
