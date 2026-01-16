@@ -144,11 +144,63 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             raise
 
     def cleanup(self): # , connection: SCIMProviderGroup
-        self.logger.warning("RUN CLEANUP")
-        if self.provider.compatibility_mode == SCIMCompatibilityMode.AWS:
-            self.logger.warning("TRUE")
-        else:
-            self.logger.warning("FALSE")
+        # self.logger.warning("RUN CLEANUP")
+        # if self.provider.compatibility_mode == SCIMCompatibilityMode.AWS:
+        #     self.logger.warning("TRUE")
+        # else:
+        #     self.logger.warning("FALSE")
+                        
+        remote_group_ids = []
+        match self.provider.compatibility_mode:
+            case SCIMCompatibilityMode.AWS:
+                rsp = self._request(
+                    "GET",
+                    "/Groups",
+                    params = {
+                        'cursor': '',
+                    }
+                )
+                for group in rsp['Resources']:
+                    # remote_groups.append(SCIMGroupSchema.model_validate(group).scim_id)
+                    scim_group = SCIMGroupSchema.model_validate(group)
+                    remote_group_ids[scim_group.id] = scim_group.scim_id  # todo: to check if group with scim_group.id already exists
+                while 'nextCursor' in rsp:
+                    rsp = self._request(
+                        "GET",
+                        "/Groups",
+                        params = {
+                            'cursor': rsp['nextCursor'],
+                        }
+                    )
+                    for group in rsp['Resources']:
+                        # remote_groups.append(SCIMGroupSchema.model_validate(group).scim_id)
+                        scim_group = SCIMGroupSchema.model_validate(group)
+                        remote_group_ids[scim_group.id] = scim_group.scim_id
+        if len(remote_group_ids.keys()) < 1:
+            return
+
+        local_group_ids = list(
+            SCIMGroupSchema.objects.filter(
+                group__pk__in=remote_group_ids.keys(), provider=self.provider
+            ).values_list("id", flat=True)
+        )
+        for id in remote_group_ids.keys():
+            if id not in local_group_ids:
+                self.logger.warning(f"DELETE group {remote_group_ids[id]}")
+                # self._request("DELETE", f"/Groups/{remote_group_ids[id]}")
+                # try:
+                #     self._request("DELETE", f"/Groups/{remote_group_ids[id]}")
+                # except NotFoundSyncException:
+                #     # Resource missing is handled by self.write, which will re-create the group
+                #     pass
+
+        # for group in remote_groups:
+        #     if
+        #     try:
+        #         self._request("DELETE", f"/Groups/{group}")
+        #     except NotFoundSyncException:
+        #         # Resource missing is handled by self.write, which will re-create the group
+        #         pass
 
     def _update_patch(
         self, group: Group, scim_group: SCIMGroupSchema, connection: SCIMProviderGroup
