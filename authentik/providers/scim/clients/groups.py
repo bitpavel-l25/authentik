@@ -177,18 +177,20 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                         remote_group_ids.append(SCIMGroupSchema.model_validate(group).id)
                         # scim_group = SCIMGroupSchema.model_validate(group)
                         # remote_group_ids[scim_group.externalId] = scim_group.id
-        if len(remote_group_ids.keys()) < 1:
+        if len(remote_group_ids) < 1:
             return
         self.logger.warning("REMOTE GROUP IDS", groups=remote_group_ids)
 
         local_group_ids = list(
             SCIMProviderGroup.objects.filter(
-                group__pk__in=remote_group_ids.keys(), provider=self.provider
+                group__pk__in=remote_group_ids, provider=self.provider
             ).values_list("scim_id", flat=True)
         )
         self.logger.warning("LOCAL GROUP IDS", groups=local_group_ids)
+        counter=0
         for id in remote_group_ids:
             if id not in local_group_ids:
+                counter+=1
                 self.logger.warning(f"DELETE group {id}")
                 # self._request("DELETE", f"/Groups/{remote_group_ids[id]}")
                 # try:
@@ -196,6 +198,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 # except NotFoundSyncException:
                 #     # Resource missing is handled by self.write, which will re-create the group
                 #     pass
+        self.logger.warning(f"About to delete {counter}/{len(remote_group_ids)} groups")
 
         # for group in remote_groups:
         #     if
