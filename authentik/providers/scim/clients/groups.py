@@ -303,6 +303,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                     "GET",
                     "/Users",
                     params = {
+                        'count': '2',
                         'cursor': '',
                         'filter': f'groups.value eq "{scim_group.scim_id}"',
                     }
@@ -317,6 +318,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                         "GET",
                         "/Users",
                         params = {
+                            'count': '2',
                             'cursor': rsp['nextCursor'],
                             'filter': f'groups.value eq "{scim_group.scim_id}"'
                         }
