@@ -327,6 +327,8 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                         current_group_members.append(
                             SCIMUserSchema.model_validate(u).id
                         )
+                    self.logger.warning(f"YYYYY Group {scim_group.scim_id}:", members=current_group_members)
+
 
 
             case _:
