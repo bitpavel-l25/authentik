@@ -143,7 +143,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             # Resource missing is handled by self.write, which will re-create the group
             raise
 
-    def cleanup(self): # , connection: SCIMProviderGroup
+    def cleanup(self):
         # self.logger.warning("RUN CLEANUP")
         # if self.provider.compatibility_mode == SCIMCompatibilityMode.AWS:
         #     self.logger.warning("TRUE")
@@ -151,62 +151,84 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         #     self.logger.warning("FALSE")
                         
         remote_group_ids = {}
-        # remote_group_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
-                rsp = self._request(
-                    "GET",
-                    "/Groups",
-                    params = {
-                        'cursor': '',
-                    }
-                )
-                for group in rsp['Resources']:
-                    # remote_group_ids.append(SCIMGroupSchema.model_validate(group).id)
-                    scim_group = SCIMGroupSchema.model_validate(group)
-                    remote_group_ids[scim_group.externalId] = scim_group.id  # todo: to check if group with scim_group.id already exists
-                while 'nextCursor' in rsp:
-                    rsp = self._request(
-                        "GET",
-                        "/Groups",
-                        params = {
-                            'cursor': rsp['nextCursor'],
-                        }
-                    )
-                    for group in rsp['Resources']:
-                        # remote_group_ids.append(SCIMGroupSchema.model_validate(group).id)
-                        scim_group = SCIMGroupSchema.model_validate(group)
-                        remote_group_ids[scim_group.externalId] = scim_group.id
+                # rsp = self._request(
+                #     "GET",
+                #     "/Groups",
+                #     params = {
+                #         'cursor': '',
+                #     }
+                # )
+                # for group in rsp['Resources']:
+                #     scim_group = SCIMGroupSchema.model_validate(group)
+                #     if scim_group.externalId in scim_group:
+                #         self.logger.error(
+                #             "SCIM group with conflicting External ID is found",
+                #             external_id=scim_group.externalId,
+                #             scim_id=scim_group.id
+                #         )
+                #     else:
+                #         remote_group_ids[scim_group.externalId] = scim_group.id
+                rsp, nextCursor = self._cleanup_aws_paged_groups('')
+                remote_group_ids.update(rsp)
+                while nextCursor:
+                    rsp, nextCursor = self._cleanup_aws_paged_groups(nextCursor)
+                    remote_group_ids.update(rsp)
+                self.logger.warning("REMOTE GROUP IDS", groups=remote_group_ids) # TODO: clean up
+                # while 'nextCursor' in rsp:
+                #     rsp = self._request(
+                #         "GET",
+                #         "/Groups",
+                #         params = {
+                #             'cursor': rsp['nextCursor'],
+                #         }
+                #     )
+                #     for group in rsp['Resources']:
+                #         # TODO: move to method
+                #         scim_group = SCIMGroupSchema.model_validate(group)
+                #         if scim_group.externalId in scim_group:
+                #             self.logger.error(
+                #                 "SCIM group with conflicting External ID is found",
+                #                 external_id=scim_group.externalId,
+                #                 scim_id=scim_group.id
+                #             )
+                #         else:
+                #             remote_group_ids[scim_group.externalId] = scim_group.id
         if len(remote_group_ids) < 1:
             return
-        self.logger.warning("REMOTE GROUP IDS", groups=remote_group_ids) # TODO: clean up
-
         local_group_ids = list(
             SCIMProviderGroup.objects.filter(
                 group__pk__in=remote_group_ids.keys(), provider=self.provider
             ).values_list("scim_id", flat=True)
         )
-        self.logger.warning("LOCAL GROUP IDS", groups=local_group_ids) # TODO: clean up
-        counter=0 # TODO: clean up
         for id in remote_group_ids.values():
             if id not in local_group_ids:
-                counter+=1 # TODO: clean up
-                # self.logger.warning(f"DELETE group {id}") # TODO: clean up
                 self._request("DELETE", f"/Groups/{id}")
-                # try:
-                #     self._request("DELETE", f"/Groups/{remote_group_ids[id]}")
-                # except NotFoundSyncException:
-                #     # Resource missing is handled by self.write, which will re-create the group
-                #     pass
-        self.logger.warning(f"About to delete {counter}/{len(remote_group_ids)} groups") # TODO: clean up
 
-        # for group in remote_groups:
-        #     if
-        #     try:
-        #         self._request("DELETE", f"/Groups/{group}")
-        #     except NotFoundSyncException:
-        #         # Resource missing is handled by self.write, which will re-create the group
-        #         pass
+    def _cleanup_aws_paged_groups(self, cursor):
+        remote_group_ids = {}
+        rsp = self._request(
+            "GET",
+            "/Groups",
+            params = {
+                'cursor': cursor,
+            }
+        )
+        for group in rsp['Resources']:
+            scim_group = SCIMGroupSchema.model_validate(group)
+            if scim_group.externalId in scim_group:
+                self.logger.error(
+                    "SCIM group with conflicting External ID is found",
+                    external_id=scim_group.externalId,
+                    scim_id=scim_group.id
+                )
+            else:
+                remote_group_ids[scim_group.externalId] = scim_group.id
+        if 'nextCursor' in rsp:
+            return remote_group_ids, rsp['nextCursor']
+        else:
+            return remote_group_ids, None
 
     def _update_patch(
         self, group: Group, scim_group: SCIMGroupSchema, connection: SCIMProviderGroup
