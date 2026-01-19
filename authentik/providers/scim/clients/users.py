@@ -151,6 +151,10 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
             return
         self.logger.warning("REMOTE USER IDS", ids=remote_user_ids) # TODO: to remove
 
+        # for id in remote_user_ids.values():
+            # SCIMProviderUser.objects.filter(provider=self.provider, scim_id=id).first()
+            # list(SCIMProviderUser.objects.filter(provider=self.provider).values_list("scim_id", flat=True))
+
         # local_user_ids_old = list(
         #     SCIMProviderGroup.objects.filter(
         #         user__pk__in=remote_user_ids.keys(), provider=self.provider
@@ -161,11 +165,13 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         #     if id not in local_user_ids_old:
         #         self._request("DELETE", f"/Groups/{id}")
 
-        local_user_ids_raw = list(
-            self.provider.get_object_qs(User).values_list("scimprovideruser", flat=True) # uuid
-        )
-        self.logger.warning("LOCAL USER IDS RAW", ids=local_user_ids_raw)
-        local_user_ids = [str(i) for i in local_user_ids_raw]
+        # local_user_ids_raw = list(
+        #     self.provider.get_object_qs(User).values_list("scimprovideruser", flat=True) # uuid
+        # )
+        # self.logger.warning("LOCAL USER IDS RAW", ids=local_user_ids_raw)
+        # local_user_ids = [str(i) for i in local_user_ids_raw]
+
+        local_user_ids = list(SCIMProviderUser.objects.filter(provider=self.provider).values_list("scim_id", flat=True))
 
         self.logger.warning("LOCAL USER IDS", ids=local_user_ids)
 
