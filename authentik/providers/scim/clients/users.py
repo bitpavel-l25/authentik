@@ -137,14 +137,15 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         else:
             self.logger.warning("AWS FALSE")
                         
-        remote_user_ids = {}
+        remote_user_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
                 rsp, nextCursor = self._get_aws_paged_user_ids('')
-                remote_user_ids.update(rsp)
+                # remote_user_ids.update(rsp)
+                remote_user_ids += rsp
                 while nextCursor:
                     rsp, nextCursor = self._get_aws_paged_user_ids(nextCursor)
-                    remote_user_ids.update(rsp)
+                    remote_user_ids += rsp
             case _: #TODO: to implement
                 return
         if len(remote_user_ids) < 1:
@@ -175,15 +176,15 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
 
         self.logger.warning("LOCAL USER IDS", ids=local_user_ids)
 
-        for id in remote_user_ids.keys():
+        for id in remote_user_ids:
             if id not in local_user_ids:
-                self.logger.warning("SCIM DELETE USER", id=remote_user_ids[id])
-                # self._request("DELETE", f"/Groups/{remote_user_ids[id]}")
+                self.logger.warning("SCIM DELETE USER", id=id)
+                # self._request("DELETE", f"/Groups/{id}")
 
 
 
     def _get_aws_paged_user_ids(self, cursor):
-        remote_user_ids = {}
+        remote_user_ids = []
         rsp = self._request(
             "GET",
             "/Users",
@@ -200,7 +201,8 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
                     scim_id=scim_user.id
                 )
             else:
-                remote_user_ids[scim_user.externalId] = scim_user.id
+                # remote_user_ids[scim_user.externalId] = scim_user.id
+                remote_user_ids.append(scim_user.id)
         if 'nextCursor' in rsp:
             return remote_user_ids, rsp['nextCursor']
         else:
