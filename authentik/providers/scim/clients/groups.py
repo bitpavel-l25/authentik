@@ -177,7 +177,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         local_group_ids_2_tmp = list(
             self.provider.get_object_qs(Group).values_list("group_uuid", flat=True)
         )
-        local_group_ids_2 = str(i) for i in local_group_ids_2_tmp
+        local_group_ids_2 = [str(i) for i in local_group_ids_2_tmp]
 
         self.logger.warning("LOCAL GROUP IDS NEW", ids=local_group_ids_2)
 
