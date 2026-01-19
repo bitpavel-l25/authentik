@@ -183,7 +183,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
 
         for id in remote_group_ids.keys():
             if id not in local_group_ids:
-                self.logger.warning("SCIM DELETE", id=remote_group_ids[id])
+                self.logger.warning("SCIM DELETE GROUP", id=remote_group_ids[id])
                 # self._request("DELETE", f"/Groups/{remote_group_ids[id]}")
 
 

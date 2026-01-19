@@ -170,7 +170,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
 
         for id in remote_user_ids.keys():
             if id not in local_user_ids:
-                self.logger.warning("SCIM DELETE", id=remote_user_ids[id])
+                self.logger.warning("SCIM DELETE USER", id=remote_user_ids[id])
                 # self._request("DELETE", f"/Groups/{remote_user_ids[id]}")
 
 
