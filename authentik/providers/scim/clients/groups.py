@@ -162,27 +162,27 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 return
         if len(remote_group_ids) < 1:
             return
-        self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove
+        # self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove
 
-        local_group_ids = list(
-            SCIMProviderGroup.objects.filter(
-                group__pk__in=remote_group_ids.keys(), provider=self.provider
-            ).values_list("scim_id", flat=True)
-        )
-        self.logger.warning("LOCAL GROUP IDS OLD", ids=local_group_ids)
+        # local_group_ids_old = list(
+        #     SCIMProviderGroup.objects.filter(
+        #         group__pk__in=remote_group_ids.keys(), provider=self.provider
+        #     ).values_list("scim_id", flat=True)
+        # )
+        # self.logger.warning("LOCAL GROUP IDS OLD", ids=local_group_ids_old)
         # for id in remote_group_ids.values():
-        #     if id not in local_group_ids:
+        #     if id not in local_group_ids_old:
         #         self._request("DELETE", f"/Groups/{id}")
 
-        local_group_ids_2_tmp = list(
+        local_group_ids_raw = list(
             self.provider.get_object_qs(Group).values_list("group_uuid", flat=True)
         )
-        local_group_ids_2 = [str(i) for i in local_group_ids_2_tmp]
+        local_group_ids = [str(i) for i in local_group_ids_raw]
 
-        self.logger.warning("LOCAL GROUP IDS NEW", ids=local_group_ids_2)
+        # self.logger.warning("LOCAL GROUP IDS NEW", ids=local_group_ids_2)
 
         for id in remote_group_ids.keys():
-            if id not in local_group_ids_2:
+            if id not in local_group_ids:
                 self.logger.warning("SCIM DELETE", id=remote_group_ids[id])
                 # self._request("DELETE", f"/Groups/{remote_group_ids[id]}")
 
