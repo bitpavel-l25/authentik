@@ -149,7 +149,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
                 return
         if len(remote_user_ids) < 1:
             return
-        # self.logger.warning("REMOTE GROUP IDS", ids=remote_user_ids) # TODO: to remove
+        self.logger.warning("REMOTE USER IDS", ids=remote_user_ids) # TODO: to remove
 
         # local_user_ids_old = list(
         #     SCIMProviderGroup.objects.filter(
@@ -166,7 +166,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         )
         local_user_ids = [str(i) for i in local_user_ids_raw]
 
-        # self.logger.warning("LOCAL GROUP IDS NEW", ids=local_user_ids_raw)
+        self.logger.warning("LOCAL USER IDS", ids=local_user_ids)
 
         for id in remote_user_ids.keys():
             if id not in local_user_ids:
