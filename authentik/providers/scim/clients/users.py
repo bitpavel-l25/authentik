@@ -164,6 +164,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         local_user_ids_raw = list(
             self.provider.get_object_qs(User).values_list("scimprovideruser", flat=True) # uuid
         )
+        self.logger.warning("LOCAL USER IDS RAW", ids=local_user_ids_raw)
         local_user_ids = [str(i) for i in local_user_ids_raw]
 
         self.logger.warning("LOCAL USER IDS", ids=local_user_ids)
