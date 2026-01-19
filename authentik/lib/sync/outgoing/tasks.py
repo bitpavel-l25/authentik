@@ -92,7 +92,6 @@ class SyncTasks:
                         object_type=User,
                     )
                 )
-                # user_cleanup_task = group(...)
                 group_tasks = group(
                     self.sync_paginator(
                         current_task=task,
@@ -102,17 +101,7 @@ class SyncTasks:
                         object_type=Group,
                     )
                 )
-                # group_cleanup_task = group(
-                #     cleanup_objects
-                # )
-
-                # cleanup_objects.message_with_options(
-                #     args=(class_to_path(Group), provider.pk),
-                #     # time_limit=time_limit,
-                #     # # Assign tasks to the same schedule as the current one
-                #     # rel_obj=current_task.rel_obj,
-                #     uid=f"{provider.name}:{Group._meta.model_name}",
-                # ).run().wait(timeout=provider.get_object_sync_time_limit_ms(Group)) # todo: reconsider timeout
+                cleanup_objects.send(class_to_path(User), provider.pk)
                 cleanup_objects.send(class_to_path(Group), provider.pk)
                 users_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(User))
                 group_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(Group))

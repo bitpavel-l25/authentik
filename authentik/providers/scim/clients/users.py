@@ -123,3 +123,60 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         )
         connection.attributes = response
         connection.save()
+
+    def cleanup(self):
+        self.logger.warning("RUN USERS CLEANUP")
+        if self.provider.compatibility_mode == SCIMCompatibilityMode.AWS:
+            self.logger.warning("TRUE")
+        else:
+            self.logger.warning("FALSE")
+                        
+        # remote_group_ids = {}
+        # match self.provider.compatibility_mode:
+        #     case SCIMCompatibilityMode.AWS:
+        #         rsp = self._request(
+        #             "GET",
+        #             "/Groups",
+        #             params = {
+        #                 'cursor': '',
+        #             }
+        #         )
+        #         for group in rsp['Resources']:
+        #             scim_group = SCIMGroupSchema.model_validate(group)
+        #             if scim_group.externalId in scim_group:
+        #                 self.logger.error(
+        #                     "SCIM group with conflicting External ID is found",
+        #                     external_id=scim_group.externalId,
+        #                     scim_id=scim_group.id
+        #                 )
+        #             else:
+        #                 remote_group_ids[scim_group.externalId] = scim_group.id
+        #         while 'nextCursor' in rsp:
+        #             rsp = self._request(
+        #                 "GET",
+        #                 "/Groups",
+        #                 params = {
+        #                     'cursor': rsp['nextCursor'],
+        #                 }
+        #             )
+        #             for group in rsp['Resources']:
+        #                 # TODO: move to method
+        #                 scim_group = SCIMGroupSchema.model_validate(group)
+        #                 if scim_group.externalId in scim_group:
+        #                     self.logger.error(
+        #                         "SCIM group with conflicting External ID is found",
+        #                         external_id=scim_group.externalId,
+        #                         scim_id=scim_group.id
+        #                     )
+        #                 else:
+        #                     remote_group_ids[scim_group.externalId] = scim_group.id
+        # if len(remote_group_ids) < 1:
+        #     return
+        # local_group_ids = list(
+        #     SCIMProviderGroup.objects.filter(
+        #         group__pk__in=remote_group_ids.keys(), provider=self.provider
+        #     ).values_list("scim_id", flat=True)
+        # )
+        # for id in remote_group_ids.values():
+        #     if id not in local_group_ids:
+        #         self._request("DELETE", f"/Groups/{id}")
