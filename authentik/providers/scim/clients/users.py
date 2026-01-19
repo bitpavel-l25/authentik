@@ -15,7 +15,12 @@ from authentik.policies.utils import delete_none_values
 from authentik.providers.scim.clients.base import SCIMClient
 from authentik.providers.scim.clients.schema import SCIM_USER_SCHEMA
 from authentik.providers.scim.clients.schema import User as SCIMUserSchema
-from authentik.providers.scim.models import SCIMMapping, SCIMProvider, SCIMProviderUser
+from authentik.providers.scim.models import (
+    SCIMCompatibilityMode,
+    SCIMMapping,
+    SCIMProvider,
+    SCIMProviderUser
+)
 
 
 class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):

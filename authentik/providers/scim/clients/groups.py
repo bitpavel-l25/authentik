@@ -158,6 +158,8 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 while nextCursor:
                     rsp, nextCursor = self._get_aws_paged_group_ids(nextCursor)
                     remote_group_ids.update(rsp)
+            case _: #TODO: to implement
+                return
         if len(remote_group_ids) < 1:
             return
         local_group_ids = list(
