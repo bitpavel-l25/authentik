@@ -167,6 +167,12 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 group__pk__in=remote_group_ids.keys(), provider=self.provider
             ).values_list("scim_id", flat=True)
         )
+        self.logger.warning("LOCAL GROUP IDS OLD", ids=local_group_ids)
+        local_group_ids_2 = list(
+            self.get_object_qs(Group).values_list("scim_id", flat=True)
+        )
+        self.logger.warning("LOCAL GROUP IDS NEW", ids=local_group_ids_2)
+
         for id in remote_group_ids.values():
             if id not in local_group_ids:
                 self._request("DELETE", f"/Groups/{id}")
