@@ -169,7 +169,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         )
         self.logger.warning("LOCAL GROUP IDS OLD", ids=local_group_ids)
         local_group_ids_2 = list(
-            self.get_object_qs(Group).values_list("scim_id", flat=True)
+            self.provider.get_object_qs(Group).values_list("id", flat=True)
         )
         self.logger.warning("LOCAL GROUP IDS NEW", ids=local_group_ids_2)
 
