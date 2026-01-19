@@ -162,6 +162,8 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 return
         if len(remote_group_ids) < 1:
             return
+
+        self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids)
         local_group_ids = list(
             SCIMProviderGroup.objects.filter(
                 group__pk__in=remote_group_ids.keys(), provider=self.provider
