@@ -153,48 +153,11 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         remote_group_ids = {}
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
-                # rsp = self._request(
-                #     "GET",
-                #     "/Groups",
-                #     params = {
-                #         'cursor': '',
-                #     }
-                # )
-                # for group in rsp['Resources']:
-                #     scim_group = SCIMGroupSchema.model_validate(group)
-                #     if scim_group.externalId in scim_group:
-                #         self.logger.error(
-                #             "SCIM group with conflicting External ID is found",
-                #             external_id=scim_group.externalId,
-                #             scim_id=scim_group.id
-                #         )
-                #     else:
-                #         remote_group_ids[scim_group.externalId] = scim_group.id
-                rsp, nextCursor = self._cleanup_aws_paged_groups('')
+                rsp, nextCursor = self._get_aws_paged_group_ids('')
                 remote_group_ids.update(rsp)
                 while nextCursor:
-                    rsp, nextCursor = self._cleanup_aws_paged_groups(nextCursor)
+                    rsp, nextCursor = self._get_aws_paged_group_ids(nextCursor)
                     remote_group_ids.update(rsp)
-                self.logger.warning("REMOTE GROUP IDS", groups=remote_group_ids) # TODO: clean up
-                # while 'nextCursor' in rsp:
-                #     rsp = self._request(
-                #         "GET",
-                #         "/Groups",
-                #         params = {
-                #             'cursor': rsp['nextCursor'],
-                #         }
-                #     )
-                #     for group in rsp['Resources']:
-                #         # TODO: move to method
-                #         scim_group = SCIMGroupSchema.model_validate(group)
-                #         if scim_group.externalId in scim_group:
-                #             self.logger.error(
-                #                 "SCIM group with conflicting External ID is found",
-                #                 external_id=scim_group.externalId,
-                #                 scim_id=scim_group.id
-                #             )
-                #         else:
-                #             remote_group_ids[scim_group.externalId] = scim_group.id
         if len(remote_group_ids) < 1:
             return
         local_group_ids = list(
@@ -206,14 +169,13 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             if id not in local_group_ids:
                 self._request("DELETE", f"/Groups/{id}")
 
-    def _cleanup_aws_paged_groups(self, cursor):
+    def _get_aws_paged_group_ids(self, cursor):
         remote_group_ids = {}
         rsp = self._request(
             "GET",
             "/Groups",
             params = {
                 'cursor': cursor,
-                'count': '20', # TODO: to remove
             }
         )
         for group in rsp['Resources']:
