@@ -213,6 +213,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             "/Groups",
             params = {
                 'cursor': cursor,
+                'count': '20', # TODO: to remove
             }
         )
         for group in rsp['Resources']:
