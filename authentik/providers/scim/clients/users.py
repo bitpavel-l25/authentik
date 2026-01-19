@@ -162,7 +162,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         #         self._request("DELETE", f"/Groups/{id}")
 
         local_user_ids_raw = list(
-            self.provider.get_object_qs(User).values_list("uuid", flat=True)
+            self.provider.get_object_qs(User).values_list("scimprovideruser", flat=True) # uuid
         )
         local_user_ids = [str(i) for i in local_user_ids_raw]
 
