@@ -172,14 +172,28 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         # self.logger.warning("LOCAL USER IDS RAW", ids=local_user_ids_raw)
         # local_user_ids = [str(i) for i in local_user_ids_raw]
 
-        local_user_ids = list(SCIMProviderUser.objects.filter(provider=self.provider).values_list("scim_id", flat=True))
+        valid_user_ids = list(
+            self.provider.get_object_qs(User).values_list("id", flat=True)
+        )
+        self.logger.warning("VALID USER IDS", ids=valid_user_ids)
+
+        local_user_ids = {}
+        for i in SCIMProviderUser.objects.filter(provider=self.provider).values_list("scim_id", "user_id"):
+            local_user_ids[i[0]] = i[1]
 
         self.logger.warning("LOCAL USER IDS", ids=local_user_ids)
 
         for id in remote_user_ids:
-            if id not in local_user_ids:
-                self.logger.warning("SCIM DELETE USER", id=id)
+            if id not in local_user_ids.keys():
+                self.logger.warning("SCIM DELETE REMOTE USER", id=id)
                 # self._request("DELETE", f"/Groups/{id}")
+
+        for id in local_user_ids.values():
+            if id not in valid_user_ids:
+                user = User.objects.filter(pk=id).first()
+                # self.delete(user)
+                self.logger.warning("SCIM DELETE LOCAL USER", id=id)
+
 
 
 
