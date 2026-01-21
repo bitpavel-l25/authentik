@@ -230,7 +230,7 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
             <div class="pf-c-form">
                 <ak-switch-input
                     name="excludeUsersServiceAccount"
-                    label=${msg("Exclude service accounts")}
+                    label=${msg("Exclude service accounts 1")}
                     ?checked=${provider.excludeUsersServiceAccount ?? true}
                 >
                 </ak-switch-input>
