@@ -143,13 +143,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             # Resource missing is handled by self.write, which will re-create the group
             raise
 
-    def cleanup(self):
-        # self.logger.warning("RUN CLEANUP")
-        # if self.provider.compatibility_mode == SCIMCompatibilityMode.AWS:
-        #     self.logger.warning("TRUE")
-        # else:
-        #     self.logger.warning("FALSE")
-                        
+    def purge(self):
         remote_group_ids = {}
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
@@ -158,35 +152,33 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 while nextCursor:
                     rsp, nextCursor = self._get_aws_paged_group_ids(nextCursor)
                     remote_group_ids.update(rsp)
-            case _: #TODO: to implement
-                return
+            case _:
+                return # Not implemented
         if len(remote_group_ids) < 1:
             return
-        # self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove
+        self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove
 
-        # local_group_ids_old = list(
-        #     SCIMProviderGroup.objects.filter(
-        #         group__pk__in=remote_group_ids.keys(), provider=self.provider
-        #     ).values_list("scim_id", flat=True)
-        # )
-        # self.logger.warning("LOCAL GROUP IDS OLD", ids=local_group_ids_old)
-        # for id in remote_group_ids.values():
-        #     if id not in local_group_ids_old:
-        #         self._request("DELETE", f"/Groups/{id}")
+        local_group_ids = list(
+            SCIMProviderGroup.objects.filter(provider=self.provider).values_list("scim_id", flat=True)
+        )
+        self.logger.warning("LOCAL GROUP IDS", ids=local_group_ids) # TODO: to remove
+        for id in remote_group_ids.values():
+            if id not in local_group_ids:
+                self.logger.warning("SCIM DELETE REMOTE GROUP", id=id) # TODO: to remove
+                self._request("DELETE", f"/Groups/{id}")
 
-        local_group_ids_raw = list(
+        # TODO: to test re-enabled code!
+        # Commented out since Authentik doesn't have group filtering yet
+        valid_group_ids_raw = list(
             self.provider.get_object_qs(Group).values_list("group_uuid", flat=True)
         )
-        local_group_ids = [str(i) for i in local_group_ids_raw]
-
-        # self.logger.warning("LOCAL GROUP IDS NEW", ids=local_group_ids_2)
-
-        for id in remote_group_ids.keys():
-            if id not in local_group_ids:
-                self.logger.warning("SCIM DELETE GROUP", id=remote_group_ids[id])
-                # self._request("DELETE", f"/Groups/{remote_group_ids[id]}")
-
-
+        valid_group_ids = [str(i) for i in valid_group_ids_raw]
+        self.logger.warning("VALID GROUP IDS", ids=valid_group_ids) # TODO: to remove
+        for id in local_group_ids:
+            if id not in valid_group_ids:
+                self.logger.warning("SCIM DELETE LOCAL GROUP", id=id) # TODO: to remove
+                group = Group.objects.filter(pk=id).first()
+                self.delete(group)
 
     def _get_aws_paged_group_ids(self, cursor):
         remote_group_ids = {}

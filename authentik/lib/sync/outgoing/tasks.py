@@ -61,7 +61,7 @@ class SyncTasks:
         self,
         provider_pk: int,
         sync_objects: Actor[[str, int, int, bool], None],
-        cleanup_objects: Actor[[str, int, bool], None],
+        purge_objects: Actor[[str, int, bool], None],
     ):
         task = CurrentTask.get_task()
         self.logger = get_logger().bind(
@@ -101,8 +101,8 @@ class SyncTasks:
                         object_type=Group,
                     )
                 )
-                cleanup_objects.send(class_to_path(User), provider.pk)
-                cleanup_objects.send(class_to_path(Group), provider.pk)
+                purge_objects.send(class_to_path(User), provider.pk)
+                purge_objects.send(class_to_path(Group), provider.pk)
                 users_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(User))
                 group_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(Group))
             except TransientSyncException as exc:
@@ -190,7 +190,7 @@ class SyncTasks:
                 )
                 break
 
-    def cleanup_objects(
+    def purge_objects(
         self,
         object_type: str,
         provider_pk: int,
@@ -219,32 +219,9 @@ class SyncTasks:
         except TransientSyncException:
             return
 
-        # task = CurrentTask.get_task()
-        # self.logger = get_logger().bind(
-        #     provider_type=class_to_path(self._provider_model),
-        #     object_type=object_type,
-        # )
-                # group = Group.objects.filter(pk=group_pk).first()
-                # if not group:
-                #     return
-        # provider: OutgoingSyncProvider = self._provider_model.objects.filter(
-        #     Q(backchannel_application__isnull=False) | Q(application__isnull=False),
-        #     pk=provider_pk,
-        # ).first()
-        # if not provider:
-        #     task.warning("No provider found. Is it assigned to an application?")
-        #     return
-
-                # # Check if the object is allowed within the provider's restrictions
-                # queryset: QuerySet = provider.get_object_qs(Group)
-                # # The queryset we get from the provider must include the instance we've got given
-                # # otherwise ignore this provider
-                # if not queryset.filter(pk=group_pk).exists():
-                #     return
-
         client = provider.client_for_model(_object_type)
         try:
-            client.cleanup() # group, operation, pk_set
+            client.purge()
         except TransientSyncException as exc:
             raise Retry() from exc
         except SkipObjectException:
@@ -253,8 +230,6 @@ class SyncTasks:
             self.logger.info("Rejected dry-run event", exc=exc)
         except StopSync as exc:
             self.logger.warning("Stopping sync", exc=exc, provider_pk=provider.pk)
-
-
 
     def sync_signal_direct_dispatch(
         self,

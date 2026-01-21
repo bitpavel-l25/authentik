@@ -13,14 +13,14 @@ sync_tasks = SyncTasks(SCIMProvider)
 def scim_sync_objects(*args, **kwargs):
     return sync_tasks.sync_objects(*args, **kwargs)
 
-@actor(description=_("Clean-up SCIM provider objects."))
-def scim_cleanup_remote_objects(*args, **kwargs):
-    return sync_tasks.cleanup_objects(*args, **kwargs)
+@actor(description=_("Purge SCIM provider objects."))
+def scim_purge_objects(*args, **kwargs):
+    return sync_tasks.purge_objects(*args, **kwargs)
 
 @actor(description=_("Full sync for SCIM provider."))
 def scim_sync(provider_pk: int, *args, **kwargs):
     """Run full sync for SCIM provider"""
-    return sync_tasks.sync(provider_pk, scim_sync_objects, scim_cleanup_remote_objects)
+    return sync_tasks.sync(provider_pk, scim_sync_objects, scim_purge_objects)
 
 
 @actor(description=_("Sync a direct object (user, group) for SCIM provider."))
