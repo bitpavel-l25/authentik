@@ -59,7 +59,7 @@ class BaseOutgoingSyncClient[
         """Update object in remote destination"""
         raise NotImplementedError()
 
-    def purge(self)
+    def purge(self):
         """Purge outdated object in remote destination"""
         raise NotImplementedError()
 
