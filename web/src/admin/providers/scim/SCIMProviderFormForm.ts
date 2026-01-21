@@ -234,7 +234,12 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
                     ?checked=${provider.excludeUsersServiceAccount ?? true}
                 >
                 </ak-switch-input>
-
+                <ak-switch-input
+                    name="deleteNotFoundObjects"
+                    label=${msg("Delete Not Found Objects")}
+                    ?checked=${provider.deleteNotFoundObjects ?? true}
+                >
+                </ak-switch-input>
                 <ak-form-element-horizontal label=${msg("Group")} name="filterGroup">
                     <ak-search-select
                         .fetchObjects=${async (query?: string): Promise<Group[]> => {
