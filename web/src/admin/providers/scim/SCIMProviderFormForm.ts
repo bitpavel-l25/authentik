@@ -230,11 +230,16 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
             <div class="pf-c-form">
                 <ak-switch-input
                     name="excludeUsersServiceAccount"
-                    label=${msg("Exclude service accounts 1")}
+                    label=${msg("Exclude service accounts")}
                     ?checked=${provider.excludeUsersServiceAccount ?? true}
                 >
                 </ak-switch-input>
-
+                <ak-switch-input
+                    name="excludeUsersServiceAccount"
+                    label=${msg("Exclude service accounts")}
+                    ?checked=${provider.excludeUsersServiceAccount ?? true}
+                >
+                </ak-switch-input>
                 <ak-form-element-horizontal label=${msg("Group")} name="filterGroup">
                     <ak-search-select
                         .fetchObjects=${async (query?: string): Promise<Group[]> => {
