@@ -175,14 +175,15 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         )
         for user in rsp['Resources']:
             scim_user = SCIMUserSchema.model_validate(user)
-            if scim_user.externalId in scim_user:
-                self.logger.error(
-                    "SCIM user with conflicting External ID is found",
-                    external_id=scim_user.externalId,
-                    scim_id=scim_user.id
-                )
-            else:
-                remote_user_ids.append(scim_user.id)
+            remote_user_ids.append(scim_user.id)
+            # if scim_user.id in scim_user:
+            #     self.logger.error( # TODO: to remove
+            #         "SCIM user with conflicting External ID is found",
+            #         external_id=scim_user.externalId,
+            #         scim_id=scim_user.id
+            #     )
+            # else:
+            #     remote_user_ids.append(scim_user.id)
         if 'nextCursor' in rsp:
             return remote_user_ids, rsp['nextCursor']
         else:

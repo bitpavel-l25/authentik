@@ -144,44 +144,53 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             raise
 
     def purge(self):
-        remote_group_ids = {}
+        # remote_group_ids = {}
+        remote_group_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
                 rsp, nextCursor = self._get_aws_paged_group_ids('')
-                remote_group_ids.update(rsp)
+                # remote_group_ids.update(rsp)
+                remote_group_ids += rsp
                 while nextCursor:
                     rsp, nextCursor = self._get_aws_paged_group_ids(nextCursor)
-                    remote_group_ids.update(rsp)
+                    remote_group_ids += rsp
             case _:
                 return # Not implemented
         if len(remote_group_ids) < 1:
             return
         self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove
 
-        local_group_ids = list(
-            SCIMProviderGroup.objects.filter(provider=self.provider).values_list("scim_id", flat=True)
-        )
-        self.logger.warning("LOCAL GROUP IDS", ids=local_group_ids) # TODO: to remove
-        for id in remote_group_ids.values():
-            if id not in local_group_ids:
-                self.logger.warning("SCIM DELETE REMOTE GROUP", id=id) # TODO: to remove
-                self._request("DELETE", f"/Groups/{id}")
+        # local_group_ids = list(
+        #     SCIMProviderGroup.objects.filter(provider=self.provider).values_list("scim_id", "group_id")
+        # )
 
-        # TODO: to test re-enabled code!
-        # Commented out since Authentik doesn't have group filtering yet
+        # for id in remote_group_ids.values():
+        #     if id not in local_group_ids:
+        #         self.logger.warning("SCIM DELETE REMOTE GROUP", id=id) # TODO: to remove
+        #         self._request("DELETE", f"/Groups/{id}")
+
+        local_group_ids = {}
+        for i in SCIMProviderGroup.objects.filter(provider=self.provider).values_list("scim_id", "group_id"):
+            local_group_ids[i[0]] = i[1]
+        self.logger.warning("LOCAL GROUP IDS", ids=local_group_ids) # TODO: to remove
+        for id in remote_user_ids:
+            if id not in local_group_ids.keys():
+                self.logger.warning("SCIM DELETE REMOTE USER", id=id) # TODO: to remove
+                self._request("DELETE", f"/Users/{id}")
+
         valid_group_ids_raw = list(
             self.provider.get_object_qs(Group).values_list("group_uuid", flat=True)
         )
         valid_group_ids = [str(i) for i in valid_group_ids_raw]
         self.logger.warning("VALID GROUP IDS", ids=valid_group_ids) # TODO: to remove
-        for id in local_group_ids:
+        for id in local_group_ids.values():
             if id not in valid_group_ids:
                 self.logger.warning("SCIM DELETE LOCAL GROUP", id=id) # TODO: to remove
                 group = Group.objects.filter(pk=id).first()
                 self.delete(group)
 
     def _get_aws_paged_group_ids(self, cursor):
-        remote_group_ids = {}
+        remote_group_ids = []
         rsp = self._request(
             "GET",
             "/Groups",
@@ -191,14 +200,15 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         )
         for group in rsp['Resources']:
             scim_group = SCIMGroupSchema.model_validate(group)
-            if scim_group.externalId in scim_group:
-                self.logger.error(
-                    "SCIM group with conflicting External ID is found",
-                    external_id=scim_group.externalId,
-                    scim_id=scim_group.id
-                )
-            else:
-                remote_group_ids[scim_group.externalId] = scim_group.id
+            remote_group_ids.append(scim_group.id)
+            # if scim_group.externalId in scim_group:
+            #     self.logger.error(
+            #         "SCIM group with conflicting External ID is found",
+            #         external_id=scim_group.externalId,
+            #         scim_id=scim_group.id
+            #     )
+            # else:
+            #     remote_group_ids.append(scim_group.id)
         if 'nextCursor' in rsp:
             return remote_group_ids, rsp['nextCursor']
         else:
