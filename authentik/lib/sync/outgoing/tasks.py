@@ -222,6 +222,8 @@ class SyncTasks:
         client = provider.client_for_model(_object_type)
         try:
             client.purge()
+        except NotImplementedError:
+            return
         except TransientSyncException as exc:
             raise Retry() from exc
         except SkipObjectException:

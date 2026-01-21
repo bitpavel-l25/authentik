@@ -234,15 +234,6 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
                     ?checked=${provider.excludeUsersServiceAccount ?? true}
                 >
                 </ak-switch-input>
-                <ak-switch-input
-                    name="deleteNotFoundObjects"
-                    label=${msg("Delete Not Found Objects")}
-                    ?checked=${provider.deleteNotFoundObjects ?? false}
-                    help=${msg(
-                        "todo: to add",
-                    )}
-                >
-                </ak-switch-input>
                 <ak-form-element-horizontal label=${msg("Group")} name="filterGroup">
                     <ak-search-select
                         .fetchObjects=${async (query?: string): Promise<Group[]> => {
@@ -272,6 +263,15 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
                         ${msg("Only sync users within the selected group.")}
                     </p>
                 </ak-form-element-horizontal>
+                <ak-switch-input
+                    name="purgeObjects"
+                    label=${msg("Purge Objects")}
+                    ?checked=${provider.purge_objects ?? false}
+                    help=${msg(
+                        "Purge SCIM objects (users and groups) that don't match configured fitlers. Currently only AWS provider supported",
+                    )}
+                >
+                </ak-switch-input>
             </div>
         </ak-form-group>
 

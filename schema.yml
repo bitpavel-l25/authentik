@@ -18461,6 +18461,10 @@ paths:
         schema:
           type: boolean
       - in: query
+        name: purge_objects
+        schema:
+          type: boolean
+      - in: query
         name: filter_group
         schema:
           type: string
@@ -48598,6 +48602,8 @@ components:
             to disable.
         exclude_users_service_account:
           type: boolean
+        purge_objects:
+          type: boolean
         filter_group:
           type: string
           format: uuid
@@ -52381,6 +52387,8 @@ components:
             to disable.
         exclude_users_service_account:
           type: boolean
+        purge_objects:
+          type: boolean
         filter_group:
           type: string
           format: uuid
@@ -52502,6 +52510,8 @@ components:
           description: Cache duration for ServiceProviderConfig responses. Set minutes=0
             to disable.
         exclude_users_service_account:
+          type: boolean
+        purge_objects:
           type: boolean
         filter_group:
           type: string

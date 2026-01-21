@@ -144,6 +144,8 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             raise
 
     def purge(self):
+        if not self.provider.purge_objects:
+            return
         remote_group_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
