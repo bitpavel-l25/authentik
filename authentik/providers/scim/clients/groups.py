@@ -156,6 +156,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                     remote_group_ids += rsp
             case _:
                 return # Not implemented
+        self.logger.warning("RUN PURGE FOR SCIM GROUPS") # TODO: to remove
         if len(remote_group_ids) < 1:
             return
         # self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove

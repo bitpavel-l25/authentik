@@ -142,6 +142,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
                     remote_user_ids += rsp
             case _:
                 return  # Not implemented
+        self.logger.warning("RUN PURGE FOR SCIM USERS") # TODO: to remove
         if len(remote_user_ids) < 1:
             return
         # self.logger.warning("REMOTE USER IDS", ids=remote_user_ids) # TODO: to remove
