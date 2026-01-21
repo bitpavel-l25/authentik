@@ -235,9 +235,12 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
                 >
                 </ak-switch-input>
                 <ak-switch-input
-                    name="excludeUsersServiceAccount"
-                    label=${msg("Exclude service accounts")}
-                    ?checked=${provider.excludeUsersServiceAccount ?? true}
+                    name="deleteNotFoundObjects"
+                    label=${msg("Delete Not Found Objects")}
+                    ?checked=${provider.deleteNotFoundObjects ?? false}
+                    help=${msg(
+                        "todo: to add",
+                    )}
                 >
                 </ak-switch-input>
                 <ak-form-element-horizontal label=${msg("Group")} name="filterGroup">
