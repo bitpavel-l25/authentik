@@ -173,10 +173,10 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         for i in SCIMProviderGroup.objects.filter(provider=self.provider).values_list("scim_id", "group_id"):
             local_group_ids[i[0]] = i[1]
         self.logger.warning("LOCAL GROUP IDS", ids=local_group_ids) # TODO: to remove
-        for id in remote_user_ids:
+        for id in remote_group_ids:
             if id not in local_group_ids.keys():
-                self.logger.warning("SCIM DELETE REMOTE USER", id=id) # TODO: to remove
-                self._request("DELETE", f"/Users/{id}")
+                self.logger.warning("SCIM DELETE REMOTE GROUP", id=id) # TODO: to remove
+                self._request("DELETE", f"/Groups/{id}")
 
         valid_group_ids_raw = list(
             self.provider.get_object_qs(Group).values_list("group_uuid", flat=True)
