@@ -142,27 +142,24 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
                 return  # Not implemented
         if len(remote_user_ids) < 1:
             return
-        self.logger.warning("REMOTE USER IDS", ids=remote_user_ids) # TODO: to remove
-
+        # self.logger.warning("REMOTE USER IDS", ids=remote_user_ids) # TODO: to remove
         local_user_ids = {}
         for i in SCIMProviderUser.objects.filter(provider=self.provider).values_list("scim_id", "user_id"):
             local_user_ids[i[0]] = i[1]
-        self.logger.warning("LOCAL USER IDS", ids=local_user_ids) # TODO: to remove
+        # self.logger.warning("LOCAL USER IDS", ids=local_user_ids) # TODO: to remove
         for id in remote_user_ids:
             if id not in local_user_ids.keys():
-                self.logger.warning("SCIM DELETE REMOTE USER", id=id) # TODO: to remove
+                # self.logger.warning("SCIM DELETE REMOTE USER", id=id) # TODO: to remove
                 self._request("DELETE", f"/Users/{id}")
-
         valid_user_ids = list(
             self.provider.get_object_qs(User).values_list("id", flat=True)
         )
-        self.logger.warning("VALID USER IDS", ids=valid_user_ids) # TODO: to remove
+        # self.logger.warning("VALID USER IDS", ids=valid_user_ids) # TODO: to remove
         for id in local_user_ids.values():
             if id not in valid_user_ids:
-                self.logger.warning("SCIM DELETE LOCAL USER", id=id) # TODO: to remove
+                # self.logger.warning("SCIM DELETE LOCAL USER", id=id) # TODO: to remove
                 user = User.objects.filter(pk=id).first()
                 self.delete(user)
-
 
     def _get_aws_paged_user_ids(self, cursor):
         remote_user_ids = []
@@ -176,14 +173,6 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         for user in rsp['Resources']:
             scim_user = SCIMUserSchema.model_validate(user)
             remote_user_ids.append(scim_user.id)
-            # if scim_user.id in scim_user:
-            #     self.logger.error( # TODO: to remove
-            #         "SCIM user with conflicting External ID is found",
-            #         external_id=scim_user.externalId,
-            #         scim_id=scim_user.id
-            #     )
-            # else:
-            #     remote_user_ids.append(scim_user.id)
         if 'nextCursor' in rsp:
             return remote_user_ids, rsp['nextCursor']
         else:
