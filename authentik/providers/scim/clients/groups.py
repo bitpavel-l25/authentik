@@ -149,19 +149,21 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         remote_group_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
-                rsp, nextCursor = self._get_aws_paged_group_ids('')
+                rsp, nextCursor = self._get_aws_paged_group_ids("")
                 remote_group_ids += rsp
                 while nextCursor:
                     rsp, nextCursor = self._get_aws_paged_group_ids(nextCursor)
                     remote_group_ids += rsp
             case _:
-                return # Not implemented
-        self.logger.warning("RUN PURGE FOR SCIM GROUPS") # TODO: to remove
+                return  # Not implemented
+        self.logger.warning("RUN PURGE FOR SCIM GROUPS")  # TODO: to remove
         if len(remote_group_ids) < 1:
             return
         # self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove
         local_group_ids = {}
-        for i in SCIMProviderGroup.objects.filter(provider=self.provider).values_list("scim_id", "group_id"):
+        for i in SCIMProviderGroup.objects.filter(provider=self.provider).values_list(
+            "scim_id", "group_id"
+        ):
             local_group_ids[i[0]] = str(i[1])
         # self.logger.warning("LOCAL GROUP IDS", ids=local_group_ids) # TODO: to remove
         for id in remote_group_ids:
@@ -184,15 +186,15 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         rsp = self._request(
             "GET",
             "/Groups",
-            params = {
-                'cursor': cursor,
-            }
+            params={
+                "cursor": cursor,
+            },
         )
-        for group in rsp['Resources']:
+        for group in rsp["Resources"]:
             scim_group = SCIMGroupSchema.model_validate(group)
             remote_group_ids.append(scim_group.id)
-        if 'nextCursor' in rsp:
-            return remote_group_ids, rsp['nextCursor']
+        if "nextCursor" in rsp:
+            return remote_group_ids, rsp["nextCursor"]
         else:
             return remote_group_ids, None
 
@@ -342,29 +344,25 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                 rsp = self._request(
                     "GET",
                     "/Users",
-                    params = {
-                        'cursor': '',
-                        'filter': f'groups.value eq "{scim_group.scim_id}"',
-                    }
+                    params={
+                        "cursor": "",
+                        "filter": f'groups.value eq "{scim_group.scim_id}"',
+                    },
                 )
-                for u in rsp['Resources']:
-                    current_group_members.append(
-                        SCIMUserSchema.model_validate(u).id
-                    )
+                for u in rsp["Resources"]:
+                    current_group_members.append(SCIMUserSchema.model_validate(u).id)
 
-                while 'nextCursor' in rsp:
+                while "nextCursor" in rsp:
                     rsp = self._request(
                         "GET",
                         "/Users",
-                        params = {
-                            'cursor': rsp['nextCursor'],
-                            'filter': f'groups.value eq "{scim_group.scim_id}"'
-                        }
+                        params={
+                            "cursor": rsp["nextCursor"],
+                            "filter": f'groups.value eq "{scim_group.scim_id}"',
+                        },
                     )
-                    for u in rsp['Resources']:
-                        current_group_members.append(
-                            SCIMUserSchema.model_validate(u).id
-                        )
+                    for u in rsp["Resources"]:
+                        current_group_members.append(SCIMUserSchema.model_validate(u).id)
             case _:
                 # Get current group status
                 current_group = SCIMGroupSchema.model_validate(

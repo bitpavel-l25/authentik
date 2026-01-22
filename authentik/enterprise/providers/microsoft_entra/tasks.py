@@ -18,6 +18,7 @@ def microsoft_entra_sync_objects(*args, **kwargs):
 def microsoft_entra_purge_objects(*args, **kwargs):
     return sync_tasks.purge_objects(*args, **kwargs)
 
+
 @actor(description=_("Full sync for Microsoft Entra provider."))
 def microsoft_entra_sync(provider_pk: int, *args, **kwargs):
     """Run full sync for Microsoft Entra provider"""

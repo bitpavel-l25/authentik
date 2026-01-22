@@ -19,7 +19,7 @@ from authentik.providers.scim.models import (
     SCIMCompatibilityMode,
     SCIMMapping,
     SCIMProvider,
-    SCIMProviderUser
+    SCIMProviderUser,
 )
 
 
@@ -135,28 +135,28 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         remote_user_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
-                rsp, nextCursor = self._get_aws_paged_user_ids('')
+                rsp, nextCursor = self._get_aws_paged_user_ids("")
                 remote_user_ids += rsp
                 while nextCursor:
                     rsp, nextCursor = self._get_aws_paged_user_ids(nextCursor)
                     remote_user_ids += rsp
             case _:
                 return  # Not implemented
-        self.logger.warning("RUN PURGE FOR SCIM USERS") # TODO: to remove
+        self.logger.warning("RUN PURGE FOR SCIM USERS")  # TODO: to remove
         if len(remote_user_ids) < 1:
             return
         # self.logger.warning("REMOTE USER IDS", ids=remote_user_ids) # TODO: to remove
         local_user_ids = {}
-        for i in SCIMProviderUser.objects.filter(provider=self.provider).values_list("scim_id", "user_id"):
+        for i in SCIMProviderUser.objects.filter(provider=self.provider).values_list(
+            "scim_id", "user_id"
+        ):
             local_user_ids[i[0]] = i[1]
         # self.logger.warning("LOCAL USER IDS", ids=local_user_ids) # TODO: to remove
         for id in remote_user_ids:
             if id not in local_user_ids.keys():
                 # self.logger.warning("SCIM DELETE REMOTE USER", id=id) # TODO: to remove
                 self._request("DELETE", f"/Users/{id}")
-        valid_user_ids = list(
-            self.provider.get_object_qs(User).values_list("id", flat=True)
-        )
+        valid_user_ids = list(self.provider.get_object_qs(User).values_list("id", flat=True))
         # self.logger.warning("VALID USER IDS", ids=valid_user_ids) # TODO: to remove
         for id in local_user_ids.values():
             if id not in valid_user_ids:
@@ -169,14 +169,14 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         rsp = self._request(
             "GET",
             "/Users",
-            params = {
-                'cursor': cursor,
-            }
+            params={
+                "cursor": cursor,
+            },
         )
-        for user in rsp['Resources']:
+        for user in rsp["Resources"]:
             scim_user = SCIMUserSchema.model_validate(user)
             remote_user_ids.append(scim_user.id)
-        if 'nextCursor' in rsp:
-            return remote_user_ids, rsp['nextCursor']
+        if "nextCursor" in rsp:
+            return remote_user_ids, rsp["nextCursor"]
         else:
             return remote_user_ids, None

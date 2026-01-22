@@ -13,9 +13,11 @@ sync_tasks = SyncTasks(SCIMProvider)
 def scim_sync_objects(*args, **kwargs):
     return sync_tasks.sync_objects(*args, **kwargs)
 
+
 @actor(description=_("Purge SCIM provider objects."))
 def scim_purge_objects(*args, **kwargs):
     return sync_tasks.purge_objects(*args, **kwargs)
+
 
 @actor(description=_("Full sync for SCIM provider."))
 def scim_sync(provider_pk: int, *args, **kwargs):

@@ -268,7 +268,7 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
                     label=${msg("Purge Objects")}
                     ?checked=${provider.purgeObjects ?? false}
                     help=${msg(
-                        "Purge SCIM objects (users and groups) that don't match configured fitlers. Currently only AWS provider supported",
+                        "Purge SCIM objects (users and groups) that don't match configured filters. Currently only AWS provider supported",
                     )}
                 >
                 </ak-switch-input>
