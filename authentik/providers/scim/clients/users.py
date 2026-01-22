@@ -130,6 +130,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
         connection.save()
 
     def purge(self):
+        """Purge remote users that don't match the provider filters"""
         if not self.provider.purge_objects:
             return
         remote_user_ids = []
@@ -142,25 +143,19 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
                     remote_user_ids += rsp
             case _:
                 return  # Not implemented
-        self.logger.warning("RUN PURGE FOR SCIM USERS")  # TODO: to remove
         if len(remote_user_ids) < 1:
             return
-        # self.logger.warning("REMOTE USER IDS", ids=remote_user_ids) # TODO: to remove
         local_user_ids = {}
         for i in SCIMProviderUser.objects.filter(provider=self.provider).values_list(
             "scim_id", "user_id"
         ):
             local_user_ids[i[0]] = i[1]
-        # self.logger.warning("LOCAL USER IDS", ids=local_user_ids) # TODO: to remove
         for id in remote_user_ids:
             if id not in local_user_ids.keys():
-                # self.logger.warning("SCIM DELETE REMOTE USER", id=id) # TODO: to remove
                 self._request("DELETE", f"/Users/{id}")
         valid_user_ids = list(self.provider.get_object_qs(User).values_list("id", flat=True))
-        # self.logger.warning("VALID USER IDS", ids=valid_user_ids) # TODO: to remove
         for id in local_user_ids.values():
             if id not in valid_user_ids:
-                # self.logger.warning("SCIM DELETE LOCAL USER", id=id) # TODO: to remove
                 user = User.objects.filter(pk=id).first()
                 self.delete(user)
 

@@ -144,6 +144,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             raise
 
     def purge(self):
+        """Purge remote groups that don't match the provider filters"""
         if not self.provider.purge_objects:
             return
         remote_group_ids = []
@@ -156,28 +157,21 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
                     remote_group_ids += rsp
             case _:
                 return  # Not implemented
-        self.logger.warning("RUN PURGE FOR SCIM GROUPS")  # TODO: to remove
         if len(remote_group_ids) < 1:
             return
-        # self.logger.warning("REMOTE GROUP IDS", ids=remote_group_ids) # TODO: to remove
         local_group_ids = {}
         for i in SCIMProviderGroup.objects.filter(provider=self.provider).values_list(
             "scim_id", "group_id"
         ):
             local_group_ids[i[0]] = str(i[1])
-        # self.logger.warning("LOCAL GROUP IDS", ids=local_group_ids) # TODO: to remove
         for id in remote_group_ids:
             if id not in local_group_ids.keys():
-                # self.logger.warning("SCIM DELETE REMOTE GROUP", id=id) # TODO: to remove
                 self._request("DELETE", f"/Groups/{id}")
-
         valid_group_ids = []
         for i in self.provider.get_object_qs(Group).values_list("group_uuid", flat=True):
             valid_group_ids.append(str(i))
-        # self.logger.warning("VALID GROUP IDS", ids=valid_group_ids) # TODO: to remove
         for id in local_group_ids.values():
             if id not in valid_group_ids:
-                # self.logger.warning("SCIM DELETE LOCAL GROUP", id=id) # TODO: to remove
                 group = Group.objects.filter(pk=id).first()
                 self.delete(group)
 

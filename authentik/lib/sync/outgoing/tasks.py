@@ -221,12 +221,8 @@ class SyncTasks:
             return
         except TransientSyncException as exc:
             raise Retry() from exc
-        # except SkipObjectException:
-        #     return
         except DryRunRejected as exc:
             self.logger.info("Rejected dry-run event", exc=exc)
-        # except StopSync as exc: # TODO: do we need it?
-        #     self.logger.warning("Stopping sync", exc=exc, provider_pk=provider.pk)
 
     def sync_signal_direct_dispatch(
         self,
