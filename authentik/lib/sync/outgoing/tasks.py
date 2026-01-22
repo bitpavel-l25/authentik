@@ -200,7 +200,7 @@ class SyncTasks:
         _object_type: type[Model] = path_to_class(object_type)
         self.logger = get_logger().bind(
             provider_type=class_to_path(self._provider_model),
-            # provider_pk=provider_pk,
+            provider_pk=provider_pk,
             object_type=object_type,
         )
         provider: OutgoingSyncProvider | None = self._provider_model.objects.filter(
@@ -214,11 +214,6 @@ class SyncTasks:
         # so that scheduled sync tasks still run in dry_run mode
         if override_dry_run:
             provider.dry_run = False
-        try:
-            client = provider.client_for_model(_object_type)
-        except TransientSyncException:
-            return
-
         client = provider.client_for_model(_object_type)
         try:
             client.purge()
@@ -226,12 +221,12 @@ class SyncTasks:
             return
         except TransientSyncException as exc:
             raise Retry() from exc
-        except SkipObjectException:
-            return
+        # except SkipObjectException:
+        #     return
         except DryRunRejected as exc:
             self.logger.info("Rejected dry-run event", exc=exc)
-        except StopSync as exc:
-            self.logger.warning("Stopping sync", exc=exc, provider_pk=provider.pk)
+        # except StopSync as exc: # TODO: do we need it?
+        #     self.logger.warning("Stopping sync", exc=exc, provider_pk=provider.pk)
 
     def sync_signal_direct_dispatch(
         self,
