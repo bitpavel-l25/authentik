@@ -252,6 +252,7 @@ class SyncTasks:
         self.logger = get_logger().bind(
             provider_type=class_to_path(self._provider_model),
         )
+        self.logger.warning("SIGNAL sync_signal_direct", model=model, pk=pk, provider_pk=provider_pk, raw_op=raw_op)
         model_class: type[Model] = path_to_class(model)
         instance = model_class.objects.filter(pk=pk).first()
         if not instance:
