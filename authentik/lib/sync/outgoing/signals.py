@@ -73,6 +73,7 @@ def register_signals(
             Direction.remove.value,
         )
 
+    print('REGISTER SIGNALS pre_delete')
     pre_delete.connect(model_pre_delete, User, dispatch_uid=uid, weak=False)
     pre_delete.connect(model_pre_delete, Group, dispatch_uid=uid, weak=False)
 
