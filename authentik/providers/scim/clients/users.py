@@ -131,8 +131,6 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
 
     def purge(self):
         """Purge remote users that don't match the provider filters"""
-        if not self.provider.purge_objects:
-            return
         remote_user_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:

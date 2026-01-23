@@ -145,8 +145,6 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
 
     def purge(self):
         """Purge remote groups that don't match the provider filters"""
-        if not self.provider.purge_objects:
-            return
         remote_group_ids = []
         match self.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:

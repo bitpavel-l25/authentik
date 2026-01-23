@@ -39,7 +39,6 @@ class SCIMProviderSerializer(
             "service_provider_config_cache_timeout",
             "exclude_users_service_account",
             "filter_group",
-            "purge_objects",
             "sync_page_size",
             "sync_page_timeout",
             "dry_run",
@@ -57,7 +56,6 @@ class SCIMProviderViewSet(OutgoingSyncProviderStatusMixin, UsedByMixin, ModelVie
         "exclude_users_service_account",
         "url",
         "filter_group",
-        "purge_objects",
     ]
     search_fields = ["name", "url"]
     ordering = ["name", "url"]

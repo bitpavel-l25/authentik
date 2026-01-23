@@ -263,15 +263,6 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
                         ${msg("Only sync users within the selected group.")}
                     </p>
                 </ak-form-element-horizontal>
-                <ak-switch-input
-                    name="purgeObjects"
-                    label=${msg("Purge Objects")}
-                    ?checked=${provider.purgeObjects ?? false}
-                    help=${msg(
-                        "Purge SCIM objects (users and groups) that don't match configured filters. Currently only AWS provider supported",
-                    )}
-                >
-                </ak-switch-input>
             </div>
         </ak-form-group>
 
