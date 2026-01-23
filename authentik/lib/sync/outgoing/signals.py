@@ -62,11 +62,13 @@ def register_signals(
     post_save.connect(model_post_save, Group, dispatch_uid=uid, weak=False)
 
     def model_pre_delete(sender: type[Model], instance: User | Group, **_):
-        print('RUN model_pre_delete', path=class_to_path(instance.__class__), pk=instance.pk)
+        print(f'RUN model_pre_delete {class_to_path(instance.__class__)}: {instance.pk}')
         """Pre-delete handler"""
         if _CTX_INHIBIT_DISPATCH.get():
+            print("_CTX_INHIBIT_DISPATCH.get(): TRUE")
             return
         if not provider_type.objects.exists():
+            print("provider_type.objects.exists(): FALSE")
             return
         task_sync_direct_dispatch.send(
             class_to_path(instance.__class__),
