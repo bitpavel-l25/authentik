@@ -123,6 +123,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             groups_res = groups.get("Resources", [])
             if len(groups_res) < 1:
                 raise exc
+            self.logger.warning("[Group] groups_res", groups_res=groups_res)
             connection = SCIMProviderGroup.objects.create(
                 provider=self.provider,
                 group=group,
