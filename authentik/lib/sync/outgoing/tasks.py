@@ -101,8 +101,8 @@ class SyncTasks:
                         object_type=Group,
                     )
                 )
-                purge_objects.send(class_to_path(User), provider.pk)
-                purge_objects.send(class_to_path(Group), provider.pk)
+                # purge_objects.send(class_to_path(User), provider.pk)
+                # purge_objects.send(class_to_path(Group), provider.pk)
                 users_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(User))
                 group_tasks.run().wait(timeout=provider.get_object_sync_time_limit_ms(Group))
             except TransientSyncException as exc:
