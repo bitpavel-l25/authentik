@@ -2,6 +2,7 @@
 
 from typing import Any, Self
 from uuid import uuid4
+import json
 
 from django.db import models
 from django.db.models import QuerySet
@@ -190,8 +191,33 @@ class SCIMProvider(OutgoingSyncProvider, BackchannelProvider):
             return base.order_by("pk")
         if type == Group:
             # Get queryset of all groups with consistent ordering
-            return Group.objects.all().order_by("pk")
+            base = Group.objects.all().order_by("pk")
+            group_filter = self._get_custom_config_value('group_filter_contains')
+            if group_filter is not None:
+                base = base.filter(name__contains=group_filter)
+            return base
         raise ValueError(f"Invalid type {type}")
+
+    def _get_custom_config_value(self, parameter):
+        try:
+            config_string = self.name.split('|')[1]
+            config = json.loads(config_string)
+            rsp = config[parameter]
+            if isinstance(rsp, str):
+                return rsp
+            else:
+                LOGGER.error(
+                    "Unknown type for custom SCIM config (string is expected)",
+                    provider=self.name,
+                    field=parameter,
+                    type=type(rsp),
+                )
+                return None
+        except json.decoder.JSONDecodeError as e:
+            LOGGER.error("Failed to decode custom SCIM config", provider=self.name, error=e)
+            return None
+        except Exception as e:
+            return None
 
     @classmethod
     def get_object_mappings(cls, obj: User | Group) -> list[tuple[str, str]]:
