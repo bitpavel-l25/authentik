@@ -192,29 +192,60 @@ class SCIMProvider(OutgoingSyncProvider, BackchannelProvider):
         if type == Group:
             # Get queryset of all groups with consistent ordering
             base = Group.objects.all().order_by("pk")
-            group_filter = self._get_custom_config_value('group_filter_contains')
+            custom_config_field='group_filter_contains'
+            group_filter = self._lookup_custom_config(custom_config_field)
+            LOGGER.debug(
+                "SCIM custom config response",
+                field=custom_config_field,
+                value=group_filter,
+                provider=self.name
+            )
             if group_filter is not None:
                 base = base.filter(name__contains=group_filter)
             return base
         raise ValueError(f"Invalid type {type}")
 
-    def _get_custom_config_value(self, parameter):
+    def _lookup_custom_config(self, field):
         try:
-            config_string = self.name.split('|')[1]
+            for pm_name in self.property_mappings_group.all().order_by('name').values_list("name", flat=True):
+                rsp = self._extract_custom_config_value(pm_name, field)
+                if rsp is not None:
+                    return rsp
+        except Exception as e:
+            return None
+        return None
+
+    def _extract_custom_config_value(self, custom_config_raw, field):
+        LOGGER.debug(
+            "Checking SCIM custom config candidate",
+            raw_custom_config=custom_config_raw,
+            provider=self.name
+        )
+        try:
+            custom_config_split = custom_config_raw.split('|')
+            if len(custom_config_split) <= 1:
+                return None
+            config_string = custom_config_split[-1]
             config = json.loads(config_string)
-            rsp = config[parameter]
+            rsp = config[field]
             if isinstance(rsp, str):
                 return rsp
             else:
                 LOGGER.error(
                     "Unknown type for custom SCIM config (string is expected)",
                     provider=self.name,
-                    field=parameter,
+                    raw_custom_config = custom_config_raw,
+                    field=field,
                     type=type(rsp),
                 )
                 return None
         except json.decoder.JSONDecodeError as e:
-            LOGGER.error("Failed to decode custom SCIM config", provider=self.name, error=e)
+            LOGGER.error(
+                "Failed to decode custom SCIM config",
+                provider=self.name,
+                raw_custom_config = custom_config_raw,
+                error=e
+            )
             return None
         except Exception as e:
             return None
