@@ -20,6 +20,7 @@ import {
     CompatibilityModeEnum,
     CoreApi,
     CoreGroupsListRequest,
+    CoreGroupsRetrieveRequest,
     Group,
     OAuthSource,
     SCIMAuthenticationModeEnum,
@@ -246,7 +247,17 @@ export function renderForm({ provider = {}, errors = {}, update }: SCIMProviderF
                                 args.search = query;
                             }
                             const groups = await new CoreApi(DEFAULT_CONFIG).coreGroupsList(args);
-                            return groups.results;
+                            if (!provider.filterGroup || query !== undefined) {
+                                return groups.results;
+                            }
+
+                            const response = groups.results.filter((el) => el.pk !== provider.filterGroup);
+                            const cargs: CoreGroupsRetrieveRequest = {
+                                groupUuid: provider.filterGroup,
+                            }
+                            const citem = await new CoreApi(DEFAULT_CONFIG).coreGroupsRetrieve(cargs);
+                                response.unshift(citem);
+                            return response;
                         }}
                         .renderElement=${(group: Group): string => {
                             return group.name;
