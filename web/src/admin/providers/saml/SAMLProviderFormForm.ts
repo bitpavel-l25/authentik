@@ -21,6 +21,7 @@ import {
     FlowsInstancesListDesignationEnum,
     PropertymappingsApi,
     PropertymappingsProviderSamlListRequest,
+    PropertymappingsProviderSamlRetrieveRequest,
     SAMLBindingsEnum,
     SAMLNameIDPolicyEnum,
     SAMLPropertyMapping,
@@ -329,7 +330,19 @@ export function renderForm({
                             const items = await new PropertymappingsApi(
                                 DEFAULT_CONFIG,
                             ).propertymappingsProviderSamlList(args);
-                            return items.results;
+                            if (!provider.nameIdMapping || query !== undefined) {
+                                return items.results;
+                            }
+
+                            const response = items.results.filter((el) => el.pk !== provider.nameIdMapping);
+                            const cargs: PropertymappingsProviderSamlRetrieveRequest = {
+                                pmUuid: provider.nameIdMapping,
+                            }
+                            const citem = await new PropertymappingsApi(
+                                DEFAULT_CONFIG,
+                            ).propertymappingsProviderSamlRetrieve(cargs);
+                            response.unshift(citem);
+                            return response;
                         }}
                         .renderElement=${(item: SAMLPropertyMapping): string => {
                             return item.name;
@@ -364,7 +377,19 @@ export function renderForm({
                             const items = await new PropertymappingsApi(
                                 DEFAULT_CONFIG,
                             ).propertymappingsProviderSamlList(args);
-                            return items.results;
+                            if (!provider.authnContextClassRefMapping || query !== undefined) {
+                                return items.results;
+                            }
+
+                            const response = items.results.filter((el) => el.pk !== provider.authnContextClassRefMapping);
+                            const cargs: PropertymappingsProviderSamlRetrieveRequest = {
+                                pmUuid: provider.authnContextClassRefMapping,
+                            }
+                            const citem = await new PropertymappingsApi(
+                                DEFAULT_CONFIG,
+                            ).propertymappingsProviderSamlRetrieve(cargs);
+                            response.unshift(citem);
+                            return response;
                         }}
                         .renderElement=${(item: SAMLPropertyMapping): string => {
                             return item.name;
