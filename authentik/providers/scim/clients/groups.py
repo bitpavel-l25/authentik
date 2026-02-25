@@ -144,6 +144,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         return dumps(local_updated) != dumps(local_known)
 
     def update(self, group: Group, connection: SCIMProviderGroup):
+        self.logger.warning('RunMethod update', group=group)
         """Update existing group"""
         scim_group = self.to_schema(group, connection)
         scim_group.id = connection.scim_id
@@ -163,6 +164,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         self, group: Group, scim_group: SCIMGroupSchema, connection: SCIMProviderGroup
     ):
         """Apply provider-specific PATCH requests"""
+        self.logger.warning('RunMethod _update_patch', group=group)
         match connection.provider.compatibility_mode:
             case SCIMCompatibilityMode.AWS:
                 self._update_patch_aws(group, scim_group, connection)
@@ -174,6 +176,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         self, group: Group, scim_group: SCIMGroupSchema, connection: SCIMProviderGroup
     ):
         """Run PATCH requests for supported attributes"""
+        self.logger.warning('RunMethod _update_patch_aws', group=group)
         group_dict = scim_group.model_dump(mode="json", exclude_unset=True)
         self._patch_chunked(
             connection.scim_id,
@@ -192,6 +195,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
     ):
         """Update a group via PATCH request"""
         # Patch group's attributes instead of replacing it and re-adding users if we can
+        self.logger.warning('RunMethod _update_patch_general', group=group)
         self._request(
             "PATCH",
             f"/Groups/{connection.scim_id}",
@@ -211,6 +215,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         )
 
     def _update_put(self, group: Group, scim_group: SCIMGroupSchema, connection: SCIMProviderGroup):
+        self.logger.warning('RunMethod _update_put', group=group)
         """Update a group via PUT request"""
         try:
             self._request(
@@ -228,6 +233,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
             return self._update_patch(group, scim_group, connection)
 
     def update_group(self, group: Group, action: Direction, users_set: set[int]):
+        self.logger.warning('RunMethod update_group', group=group, action=action, users_set=users_set)
         """Update a group, either using PUT to replace it or PATCH if supported"""
         scim_group = SCIMProviderGroup.objects.filter(provider=self.provider, group=group).first()
         if not scim_group:
@@ -277,6 +283,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
 
     @transaction.atomic
     def patch_compare_users(self, group: Group):
+        self.logger.warning('RunMethod patch_compare_users', group=group)
         """Compare users with a SCIM group and add/remove any differences"""
         # Get scim group first
         scim_group = SCIMProviderGroup.objects.filter(provider=self.provider, group=group).first()
