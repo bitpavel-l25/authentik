@@ -79,7 +79,7 @@ class SCIMClient[TModel: "Model", TConnection: "Model", TSchema: "BaseModel"](
             if response.status_code == HTTP_CONFLICT:
                 raise ObjectExistsSyncException(response)
             self.logger.warning(
-                "Failed to send SCIM request", path=path, method=method, response=response.text
+                "Failed to send SCIM request", path=path, method=method, response=response.text, response_code=response.status_code, response_reason=response.reason
             )
             raise SCIMRequestException(response)
         if response.status_code == HTTP_NO_CONTENT:

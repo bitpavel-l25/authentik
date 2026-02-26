@@ -266,6 +266,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
         """Helper function that chunks patch requests based on the maxOperations attribute.
         This is not strictly according to specs but there's nothing in the schema that allows the
         us to know what the maximum patch operations per request should be."""
+        self.logger.warning('RunMethod _patch_chunked', group_id=group_id)
         chunk_size = self._config.bulk.maxOperations
         if chunk_size < 1:
             chunk_size = len(ops)
@@ -354,6 +355,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
 
     def _patch_add_users(self, scim_group: SCIMProviderGroup, users_set: set[int]):
         """Add users in users_set to group"""
+        self.logger.warning('RunMethod _patch_add_users', group_scim_id=scim_group.scim_id)
         if len(users_set) < 1:
             return
         user_ids = list(
@@ -391,6 +393,7 @@ class SCIMGroupClient(SCIMClient[Group, SCIMProviderGroup, SCIMGroupSchema]):
 
     def _patch_remove_users(self, scim_group: SCIMProviderGroup, users_set: set[int]):
         """Remove users in users_set from group"""
+        self.logger.warning('RunMethod _patch_remove_users', group_scim_id=scim_group.scim_id)
         if len(users_set) < 1:
             return
         user_ids = list(
