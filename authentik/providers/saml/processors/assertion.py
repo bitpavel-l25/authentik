@@ -150,7 +150,7 @@ class AssertionProcessor:
             self.http_request.session.session_key.encode("ascii")
         ).hexdigest()
         auth_n_statement.attrib["SessionIndex"] = self.session_index
-        auth_n_statement.attrib["SessionNotOnOrAfter"] = self._session_not_on_or_after
+        # auth_n_statement.attrib["SessionNotOnOrAfter"] = self._session_not_on_or_after
 
         auth_n_context = SubElement(auth_n_statement, f"{{{NS_SAML_ASSERTION}}}AuthnContext")
         auth_n_context_class_ref = SubElement(
